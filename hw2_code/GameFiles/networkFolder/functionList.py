@@ -15,7 +15,7 @@ IMG_EXT = '.jpg'
 TRAIN_DATA = 'train.csv'
 
 class Map():
-    def __init__(self):
+    def __init__(self, num):
         transform1=transforms.Compose([transforms.ToTensor()])
         self.test_dataset = torchvision.datasets.MNIST(root='MnistData/',
                                                   train = False,
@@ -26,7 +26,7 @@ class Map():
                                                   batch_size=batch_size,
                                                   shuffle=False)
 
-        self.imageNumber = 0
+        self.imageNumber = num
         self.mnist = next(iter(self.test_loader))
         self.map = np.reshape(self.mnist[0][self.imageNumber].numpy(),(28,28))*255
         self.number = self.mnist[1][self.imageNumber].numpy()

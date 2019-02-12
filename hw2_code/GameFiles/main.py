@@ -7,7 +7,7 @@ from RobotClass import Robot
 from GameClass import Game
 from RandomNavigator import RandomNavigator
 from networkFolder.functionList import Map,WorldEstimatingNetwork,DigitClassifcationNetwork
-
+import pdb
 
 map = Map()
 
@@ -15,7 +15,7 @@ map = Map()
 data = map.map
 
 print(map.number)
-
+#pdb.set_trace()
 
 robot = Robot(0,0)
 navigator = RandomNavigator()
@@ -28,7 +28,7 @@ for x in range(0,1000):
     print (robot.xLoc,robot.yLoc)
     game.tick()
 
-im = Image.fromarray(np.uint8(game.exploredMap)).show()
+# im = Image.fromarray(np.uint8(game.exploredMap)).show()
 
 
 
@@ -42,6 +42,8 @@ for x in range(0,28):
             mask[x,y] = 1
 
 image = uNet.runNetwork(game.exploredMap,mask)
-char = classNet.runNetwork(image)
-Image.fromarray(image).show()
-print(char.argmax())
+char = classNet.runNetwork(image) # softmax output values
+
+#Image.fromarray(image).show()
+# print(char.argmax())
+print(char)
