@@ -14,15 +14,22 @@ class Game:
 
 
 
-    def tick_greedy(self, predicted_image):
+    def tick_greedy(self, predicted_image, option, rewards):
+        if option == "simple":
+            action, vec = self.navigator.getgreedySimple(predicted_image)
         # action = self.navigator.getAction(self.robot,self.truthMap)
-        action = self.navigator.getgreedyAction(predicted_image)
+        if option == "bettergreedy":
+            action = self.navigator.getgreedyMore(predicted_image)
         self.robot.move(action)
+        if action is not None:
+            rewards -= 1
         self.updateMap(self.robot,self.exploredMap,self.truthMap)
-        # if self.robot.getLoc() == self.goal:
-        #     return True
-        # else:
-        #     return False
+        # print("explored map",self.exploredMap[vec[0], vec[1]])
+        if self.robot.getLoc() == self.goal:
+            rewards += 100
+            return True, rewards
+        else:
+            return False, rewards
 
     def tick(self, robot_goal, prevLoc, rewards):
         action = self.navigator.getAction(robot_goal)
@@ -37,7 +44,7 @@ class Game:
             rewards -= 1
         if self.robot.getLoc() == robot_goal:
             if self.robot.getLoc() == self.goal:
-                rewards += 400
+                rewards += 100
                 return True, rewards
             else:
                 rewards -= 400

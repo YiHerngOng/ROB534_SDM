@@ -20,8 +20,9 @@ import random
 class greedy():
 	def __init__(self, robot):
 		self.robot = robot
+		self.visited = []
 
-	def getgreedyAction(self, predicted_image):
+	def getgreedyMore(self, predicted_image):
 		robotLoc = np.array([self.robot.getLoc()[0], self.robot.getLoc()[1]])
 		# pdb.set_trace()
 		max_pixel_index = np.where(predicted_image == np.amax(predicted_image))
@@ -29,16 +30,69 @@ class greedy():
 		print("vector",max_pixel_vector)
 		print("robot",robotLoc)
 		print("max pixel",np.amax(predicted_image))
-		return self.get_direction(robotLoc, max_pixel_vector)
+		action = self.get_direction(robotLoc, max_pixel_vector)
+		print("action", action)
+		return action
+
+
+	def getgreedySimple(self, predicted_image):
+		robotLoc = np.array([self.robot.getLoc()[0], self.robot.getLoc()[1]])
+		self.visited.append(list(robotLoc))
+		# print("visited neighbours", self.visited)
+		neighbours = self.get_neighbours(robotLoc)
+		print("neighbours", neighbours)
+		neighbours_pixel =[]
+		# pdb.set_trace()
+		for i in range(len(neighbours)):
+			# print(neighbours[i][0], neighbours[i][1])
+			if neighbours[i] in self.visited:
+				print("visited neighbours", neighbours[i])
+				continue
+			else:
+				neighbours_pixel.append(predicted_image[neighbours[i][0], neighbours[i][1]])
+		max_neighbour_pixel = self.get_maxPixel(neighbours_pixel)
+		# pdb.set_trace()
+
+		print("pixels",neighbours_pixel)
+		max_neighbour_index = neighbours_pixel.index(max_neighbour_pixel)
+		try:
+			action = self.get_direction(robotLoc, neighbours[max_neighbour_index])
+		except:
+			pdb.set_trace()
+		print("vector", max_neighbour_index)
+		return action, neighbours[max_neighbour_index]
 
 	def distance(self, a, b):
 		return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+
+	def get_maxPixel(self,neighbours_pixel):
+		if len(neighbours_pixel) > 1:
+			if neighbours_pixel[1:] == neighbours_pixel[:-1]:
+				num = random.randint(0, len(neighbours_pixel)-1)
+				return neighbours_pixel[num]
+			else:
+				return max(neighbours_pixel)
+		else:
+			try:
+				return neighbours_pixel[0]
+			except:
+				pdb.set_trace()
 
 
 	def getAction(self, goal):
 		robotLoc = np.array([self.robot.getLoc()[0], self.robot.getLoc()[1]])
 		return self.get_direction(robotLoc, goal)
 
+	def get_neighbours(self, robotLoc):
+		neighbours = []
+		for x in range(-1,2):
+			for y in range(-1,2):
+				if robotLoc[0] + x > 27 or robotLoc[0] + x < 0 or robotLoc[1] + y > 27 or robotLoc[1] + y < 0:
+					continue
+				if robotLoc[0] + x == robotLoc[0] and robotLoc[1] + y == robotLoc[1]:
+					continue
+				neighbours.append([robotLoc[0]+x, robotLoc[1]+y])
+		return neighbours		
 
 	def get_direction(self, robotLoc, goal):
 		if abs(goal[0] -robotLoc[0]) > abs(goal[1] - robotLoc[1]) and (goal[0] >= robotLoc[0]):
@@ -103,7 +157,8 @@ def main():
 	# nums = np.arange(0,10)
 	# for i in nums:
 	# print("current img num", i)
-	M = Map(8)
+	option = "simple"
+	M = Map(0)
 	data = M.map
 	robot = Robot(0,0)
 	navigator = greedy(robot)
@@ -117,6 +172,7 @@ def main():
 	classNet = DigitClassifcationNetwork()
 	mask = np.zeros((28,28))
 	path_taken = np.zeros((28,28))
+	rewards = 0
 	while True:
 		path_taken[robot.getLoc()[0], robot.getLoc()[1]] = 1 # record path being taken by robot
 		for x in range(0,28):
@@ -131,9 +187,9 @@ def main():
 		if prob > 0.95:
 			break
 		new_image = (image * (1 - mask))
-		print("mask", mask[22,17])
+		# print("mask", mask[22,17])
 		# pdb.set_trace()
-		run = game.tick_greedy(new_image)
+		run, rewards = game.tick_greedy(new_image, option, rewards)
 		if run  == True:
 			break
 	# print(char)
@@ -145,7 +201,7 @@ def main():
 	# pdb.set_trace()
 	print("robot finds path")
 	robot_goal = get_goal(char.argmax())
-	rewards = 0
+
 	prevLoc = np.array([robot.getLoc()[0], robot.getLoc()[1]])
 	while True:
 		check_goal, rewards = game.tick(robot_goal, prevLoc, rewards)
